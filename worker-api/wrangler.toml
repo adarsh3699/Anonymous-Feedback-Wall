@@ -1,0 +1,13 @@
+name = "feedback-wall-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+[[kv_namespaces]]
+binding = "FEEDBACK_KV"
+id = "3c001fc41da64e5093cca15702908d09"
+preview_id = "72d44100f9e3427fa5ab1a9ce6e74f46"
+
+# Secrets are NOT stored here — set them via:
+#   npx wrangler secret put SUPABASE_URL
+#   npx wrangler secret put SUPABASE_ANON_KEY
+# They will be encrypted at rest and invisible in the dashboard.

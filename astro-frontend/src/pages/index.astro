@@ -1,0 +1,111 @@
+---
+import FeedbackForm from "../components/FeedbackForm.astro";
+import FeedbackWall from "../components/FeedbackWall.astro";
+import "../styles/global.css";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Share anonymous feedback openly and honestly. Read what others are saying on the Anonymous Feedback Wall." />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="Anonymous Feedback Wall" />
+    <meta property="og:description" content="Share your thoughts anonymously. No accounts. No judgment." />
+    <meta property="og:type" content="website" />
+    <title>Anonymous Feedback Wall</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <!-- Flash-free dark mode -->
+    <script is:inline>
+      (function () {
+        try {
+          const saved = localStorage.getItem("theme");
+          if (saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (_) {}
+      })();
+    </script>
+  </head>
+
+  <body>
+    <!-- Header -->
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="site-logo" href="/">
+          <div class="logo-icon">
+            <i data-lucide="message-circle" class="icon icon-md"></i>
+          </div>
+          <span class="logo-text"><span>Feedback</span> Wall</span>
+        </a>
+        <button id="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+          <i id="theme-icon" data-lucide="moon" class="icon icon-md"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main>
+      <div class="container">
+        <!-- Hero -->
+        <div class="page-hero">
+          <div class="hero-badge">
+            <i data-lucide="lock" class="icon icon-sm"></i>
+            100% Anonymous
+          </div>
+          <h1>Anonymous Feedback Wall</h1>
+          <p>Share your thoughts openly and honestly — no accounts, no judgment.</p>
+        </div>
+
+        <!-- Form -->
+        <FeedbackForm />
+
+        <!-- Wall -->
+        <h2 class="section-title">
+          <i data-lucide="layout-list" class="icon icon-md"></i>
+          Community Feedback
+        </h2>
+        <FeedbackWall />
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <div class="container">
+        <p>Built with <a href="https://astro.build" target="_blank" rel="noopener">Astro</a> · <a href="https://workers.cloudflare.com" target="_blank" rel="noopener">Cloudflare Workers</a> · <a href="https://supabase.com" target="_blank" rel="noopener">Supabase</a></p>
+      </div>
+    </footer>
+
+    <!-- Dark mode toggle -->
+    <script is:inline>
+      const toggle = document.getElementById("theme-toggle");
+      const html   = document.documentElement;
+
+      function syncIcon() {
+        const isDark = html.classList.contains("dark");
+        const el = document.getElementById("theme-icon");
+        if (el) {
+          el.setAttribute("data-lucide", isDark ? "sun" : "moon");
+          if (window.lucide) window.lucide.createIcons();
+        }
+      }
+
+      // Init all icons then sync
+      if (window.lucide) { window.lucide.createIcons(); }
+      else { window.addEventListener("load", () => { if (window.lucide) window.lucide.createIcons(); }); }
+
+      syncIcon();
+
+      toggle.addEventListener("click", () => {
+        html.classList.toggle("dark");
+        const theme = html.classList.contains("dark") ? "dark" : "light";
+        try { localStorage.setItem("theme", theme); } catch (_) {}
+        syncIcon();
+      });
+    </script>
+  </body>
+</html>

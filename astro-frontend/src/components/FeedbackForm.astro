@@ -1,0 +1,143 @@
+---
+const workerUrl = import.meta.env.PUBLIC_WORKER_URL ?? "";
+---
+
+<div class="card feedback-form-card">
+  <h2 class="section-title">
+    <i data-lucide="pencil-line" class="icon icon-md"></i>
+    Share your thoughts
+  </h2>
+
+  <form id="feedback-form" novalidate>
+    <div class="form-group">
+      <label class="form-label" for="name-input">Name</label>
+      <input
+        id="name-input"
+        class="form-input"
+        type="text"
+        name="name"
+        placeholder="Your name (optional)"
+        maxlength="80"
+        autocomplete="name"
+      />
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="message-input">
+        Message <span style="color:var(--error)">*</span>
+      </label>
+      <textarea
+        id="message-input"
+        class="form-textarea"
+        name="message"
+        placeholder="Share your feedback… (max 500 characters)"
+        maxlength="500"
+        required
+        rows="4"
+      ></textarea>
+      <div id="char-counter" class="char-counter">0 / 500 characters</div>
+    </div>
+
+    <button id="submit-btn" class="btn-submit" type="submit">
+      <i data-lucide="send" class="icon icon-sm"></i>
+      Send Feedback
+    </button>
+  </form>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<script define:vars={{ workerUrl }}>
+  const WORKER_URL = workerUrl;
+
+  // Re-run Lucide on this component's icons
+  if (window.lucide) window.lucide.createIcons();
+
+  // ── Character counter ──────────────────────────────────────────────────────
+  const textarea = document.getElementById("message-input");
+  const counter  = document.getElementById("char-counter");
+
+  textarea.addEventListener("input", () => {
+    const len = textarea.value.length;
+    counter.textContent = `${len} / 500 characters`;
+    counter.className = "char-counter";
+    if (len > 450) counter.classList.add("warning");
+    if (len > 480) { counter.classList.remove("warning"); counter.classList.add("danger"); }
+  });
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(message, type = "success") {
+    const container = document.getElementById("toast-container");
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    toast.setAttribute("role", "alert");
+
+    const iconName = type === "success" ? "check-circle" : "x-circle";
+    toast.innerHTML = `
+      <span class="toast-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-sm">${type === "success" ? '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'}</svg></span>
+      <span>${message}</span>
+    `;
+
+    container.appendChild(toast);
+    requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add("show")));
+    setTimeout(() => {
+      toast.classList.add("hide");
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 400);
+    }, 3000);
+  }
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  const form      = document.getElementById("feedback-form");
+  const submitBtn = document.getElementById("submit-btn");
+  const nameInput = document.getElementById("name-input");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const message = textarea.value.trim();
+    const name    = nameInput.value.trim();
+
+    if (!message) {
+      showToast("Please write a message before submitting.", "error");
+      textarea.focus();
+      return;
+    }
+    if (message.length > 500) {
+      showToast("Message must be 500 characters or fewer.", "error");
+      textarea.focus();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<span class="spinner"></span> Submitting…`;
+
+    try {
+      const res  = await fetch(`${WORKER_URL}/api/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Server error");
+
+      showToast("Feedback submitted!", "success");
+      form.reset();
+      counter.textContent = "0 / 500 characters";
+      counter.className = "char-counter";
+      document.dispatchEvent(new CustomEvent("feedbackSubmitted"));
+    } catch (err) {
+      console.error("Submit error:", err);
+      const msg = err.message.includes("Too many requests")
+        ? "Rate limit reached. Wait a minute and try again."
+        : "Something went wrong. Try again.";
+      showToast(msg, "error");
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Send Feedback`;
+    }
+  });
+</script>
