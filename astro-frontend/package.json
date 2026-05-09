@@ -1,19 +1,23 @@
 {
-    "name": "astro-frontend",
-    "version": "1.0.0",
-    "private": true,
-    "type": "module",
-    "scripts": {
-        "dev": "astro dev",
-        "build": "astro build",
-        "preview": "astro preview",
-        "check": "astro check"
-    },
-    "dependencies": {
-        "astro": "^4.15.11"
-    },
-    "devDependencies": {
-        "@astrojs/check": "^0.9.4",
-        "typescript": "^5.5.2"
-    }
+  "name": "astro-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "npm run build && wrangler dev",
+    "check": "astro check",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "11",
+    "astro": "^4.15.11"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.5.2",
+    "wrangler": "^4.90.0"
+  }
 }
