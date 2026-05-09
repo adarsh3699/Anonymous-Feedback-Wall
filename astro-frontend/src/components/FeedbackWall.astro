@@ -2,118 +2,185 @@
 const workerUrl = import.meta.env.PUBLIC_WORKER_URL ?? "";
 ---
 
-<section id="feedback-wall-section">
-  <div class="wall-controls">
-    <div class="search-wrapper">
-      <span class="search-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </span>
-      <input
-        id="search-input"
-        class="search-input"
-        type="search"
-        placeholder="Search messages…"
-        aria-label="Search feedback messages"
-      />
-    </div>
-    <span id="message-count" class="message-count">Loading…</span>
-  </div>
-
-  <div id="messages-container">
-    <div class="skeleton-grid" id="skeleton-loader">
-      {[...Array(4)].map(() => (
-        <div class="skeleton-card">
-          <div class="skeleton-row">
-            <div class="skeleton skeleton-avatar"></div>
-            <div class="skeleton skeleton-line" style="width:40%;height:12px;"></div>
-            <div class="skeleton skeleton-line" style="width:18%;height:10px;margin-left:auto;"></div>
-          </div>
-          <div class="skeleton skeleton-line" style="width:90%;height:11px;"></div>
-          <div class="skeleton skeleton-line" style="width:72%;height:11px;"></div>
-          <div class="skeleton skeleton-line" style="width:55%;height:11px;"></div>
+<section id="feedback-wall-section" data-worker-url={workerUrl}>
+    <div class="wall-controls">
+        <div class="search-wrapper">
+            <span class="search-icon">
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><circle cx="11" cy="11" r="8"></circle><line
+                        x1="21"
+                        y1="21"
+                        x2="16.65"
+                        y2="16.65"></line></svg
+                >
+            </span>
+            <input
+                id="search-input"
+                class="search-input"
+                type="search"
+                placeholder="Search messages…"
+                aria-label="Search feedback messages"
+            />
         </div>
-      ))}
+        <span id="message-count" class="message-count">Loading…</span>
     </div>
-  </div>
 
-  <div id="pagination" class="pagination" style="display:none;">
-    <button id="prev-page" class="btn-page" disabled>
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-      Prev
-    </button>
-    <span id="page-info" class="page-info">1 / 1</span>
-    <button id="next-page" class="btn-page">
-      Next
-      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-    </button>
-  </div>
+    <div id="messages-container">
+        <div class="skeleton-grid" id="skeleton-loader">
+            {
+                [...Array(4)].map(() => (
+                    <div class="skeleton-card">
+                        <div class="skeleton-row">
+                            <div class="skeleton skeleton-avatar" />
+                            <div
+                                class="skeleton skeleton-line"
+                                style="width:40%;height:12px;"
+                            />
+                            <div
+                                class="skeleton skeleton-line"
+                                style="width:18%;height:10px;margin-left:auto;"
+                            />
+                        </div>
+                        <div
+                            class="skeleton skeleton-line"
+                            style="width:90%;height:11px;"
+                        />
+                        <div
+                            class="skeleton skeleton-line"
+                            style="width:72%;height:11px;"
+                        />
+                        <div
+                            class="skeleton skeleton-line"
+                            style="width:55%;height:11px;"
+                        />
+                    </div>
+                ))
+            }
+        </div>
+    </div>
+
+    <div id="pagination" class="pagination" style="display:none;">
+        <button id="prev-page" class="btn-page" disabled>
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><polyline points="15 18 9 12 15 6"></polyline></svg
+            >
+            Prev
+        </button>
+        <span id="page-info" class="page-info">1 / 1</span>
+        <button id="next-page" class="btn-page">
+            Next
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                ><polyline points="9 18 15 12 9 6"></polyline></svg
+            >
+        </button>
+    </div>
 </section>
 
-<script define:vars={{ workerUrl }}>
-  const WORKER_URL = workerUrl;
-  const PAGE_SIZE  = 10;
+<script>
+    // @ts-nocheck
+    const sectionElement = document.getElementById("feedback-wall-section");
+    const WORKER_URL = sectionElement?.dataset.workerUrl || "";
+    const PAGE_SIZE = 10;
 
-  let allMessages = [];
-  let filtered    = [];
-  let currentPage = 1;
+    let allMessages = [];
+    let filtered = [];
+    let currentPage = 1;
 
-  function relativeTime(dateStr) {
-    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-    const rtf  = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-    if (diff < 60)    return rtf.format(-diff, "second");
-    if (diff < 3600)  return rtf.format(-Math.floor(diff / 60), "minute");
-    if (diff < 86400) return rtf.format(-Math.floor(diff / 3600), "hour");
-    if (diff < 604800) return rtf.format(-Math.floor(diff / 86400), "day");
-    return new Date(dateStr).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-  }
+    function relativeTime(dateStr) {
+        const diff = Math.floor(
+            (Date.now() - new Date(dateStr).getTime()) / 1000,
+        );
+        const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+        if (diff < 60) return rtf.format(-diff, "second");
+        if (diff < 3600) return rtf.format(-Math.floor(diff / 60), "minute");
+        if (diff < 86400) return rtf.format(-Math.floor(diff / 3600), "hour");
+        if (diff < 604800) return rtf.format(-Math.floor(diff / 86400), "day");
+        return new Date(dateStr).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
+    }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-  }
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 
-  function userSvg() {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-  }
+    function clockSvg() {
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+    }
 
-  function clockSvg() {
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
-  }
+    function renderPage() {
+        const container = document.getElementById("messages-container");
+        const pagination = document.getElementById("pagination");
+        const pageInfo = document.getElementById("page-info");
+        const prevBtn = document.getElementById("prev-page");
+        const nextBtn = document.getElementById("next-page");
+        const countEl = document.getElementById("message-count");
 
-  function renderPage() {
-    const container  = document.getElementById("messages-container");
-    const pagination = document.getElementById("pagination");
-    const pageInfo   = document.getElementById("page-info");
-    const prevBtn    = document.getElementById("prev-page");
-    const nextBtn    = document.getElementById("next-page");
-    const countEl    = document.getElementById("message-count");
+        const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+        if (currentPage > totalPages) currentPage = totalPages;
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-    if (currentPage > totalPages) currentPage = totalPages;
+        const slice = filtered.slice(
+            (currentPage - 1) * PAGE_SIZE,
+            currentPage * PAGE_SIZE,
+        );
 
-    const slice = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+        countEl.textContent =
+            filtered.length === 0
+                ? "No messages"
+                : `${filtered.length} message${filtered.length !== 1 ? "s" : ""}`;
 
-    countEl.textContent = filtered.length === 0
-      ? "No messages"
-      : `${filtered.length} message${filtered.length !== 1 ? "s" : ""}`;
-
-    if (slice.length === 0) {
-      const emptyIcon = allMessages.length === 0
-        ? `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`
-        : `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
-      container.innerHTML = `
+        if (slice.length === 0) {
+            const emptyIcon =
+                allMessages.length === 0
+                    ? `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`
+                    : `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
+            container.innerHTML = `
         <div class="messages-grid">
           <div class="empty-state">
             <div class="empty-icon">${emptyIcon}</div>
             <p>${allMessages.length === 0 ? "No messages yet. Be the first!" : "No messages match your search."}</p>
           </div>
         </div>`;
-    } else {
-      const cards = slice.map((msg, i) => {
-        const name    = msg.name || "Anonymous";
-        const initial = name[0].toUpperCase();
-        return `
+        } else {
+            const cards = slice
+                .map((msg, i) => {
+                    const name = msg.name || "Anonymous";
+                    const initial = name[0].toUpperCase();
+                    return `
           <article class="card message-card" style="animation-delay:${i * 0.05}s">
             <div class="message-card-header">
               <div class="avatar">${initial}</div>
@@ -124,67 +191,76 @@ const workerUrl = import.meta.env.PUBLIC_WORKER_URL ?? "";
             </div>
             <p class="message-body">${escapeHtml(msg.message)}</p>
           </article>`;
-      }).join("");
-      container.innerHTML = `<div class="messages-grid">${cards}</div>`;
+                })
+                .join("");
+            container.innerHTML = `<div class="messages-grid">${cards}</div>`;
+        }
+
+        if (totalPages <= 1) {
+            pagination.style.display = "none";
+        } else {
+            pagination.style.display = "flex";
+            pageInfo.textContent = `${currentPage} / ${totalPages}`;
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+        }
     }
 
-    if (totalPages <= 1) {
-      pagination.style.display = "none";
-    } else {
-      pagination.style.display = "flex";
-      pageInfo.textContent = `${currentPage} / ${totalPages}`;
-      prevBtn.disabled = currentPage === 1;
-      nextBtn.disabled = currentPage === totalPages;
+    function applyFilter(query) {
+        const q = query.trim().toLowerCase();
+        filtered = q
+            ? allMessages.filter(
+                  (m) =>
+                      (m.message ?? "").toLowerCase().includes(q) ||
+                      (m.name ?? "").toLowerCase().includes(q),
+              )
+            : [...allMessages];
+        currentPage = 1;
+        renderPage();
     }
-  }
 
-  function applyFilter(query) {
-    const q = query.trim().toLowerCase();
-    filtered = q
-      ? allMessages.filter(m =>
-          (m.message ?? "").toLowerCase().includes(q) ||
-          (m.name   ?? "").toLowerCase().includes(q))
-      : [...allMessages];
-    currentPage = 1;
-    renderPage();
-  }
-
-  async function loadMessages() {
-    try {
-      const res = await fetch(`${WORKER_URL}/api/messages`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      allMessages = await res.json();
-      document.getElementById("skeleton-loader")?.remove();
-      applyFilter(document.getElementById("search-input").value);
-    } catch (err) {
-      console.error("Failed to load messages:", err);
-      document.getElementById("skeleton-loader")?.remove();
-      const warnSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
-      document.getElementById("messages-container").innerHTML = `
+    async function loadMessages() {
+        try {
+            const res = await fetch(`${WORKER_URL}/api/messages`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            allMessages = await res.json();
+            document.getElementById("skeleton-loader")?.remove();
+            applyFilter(document.getElementById("search-input").value);
+        } catch (err) {
+            console.error("Failed to load messages:", err);
+            document.getElementById("skeleton-loader")?.remove();
+            const warnSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+            document.getElementById("messages-container").innerHTML = `
         <div class="messages-grid">
           <div class="empty-state">
             <div class="empty-icon">${warnSvg}</div>
             <p>Could not load messages. Please refresh the page.</p>
           </div>
         </div>`;
-      document.getElementById("message-count").textContent = "Error";
+            document.getElementById("message-count").textContent = "Error";
+        }
     }
-  }
 
-  document.getElementById("prev-page").addEventListener("click", () => {
-    if (currentPage > 1) { currentPage--; renderPage(); }
-  });
-  document.getElementById("next-page").addEventListener("click", () => {
-    if (currentPage < Math.ceil(filtered.length / PAGE_SIZE)) { currentPage++; renderPage(); }
-  });
+    document.getElementById("prev-page").addEventListener("click", () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderPage();
+        }
+    });
+    document.getElementById("next-page").addEventListener("click", () => {
+        if (currentPage < Math.ceil(filtered.length / PAGE_SIZE)) {
+            currentPage++;
+            renderPage();
+        }
+    });
 
-  let searchTimer;
-  document.getElementById("search-input").addEventListener("input", (e) => {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => applyFilter(e.target.value), 200);
-  });
+    let searchTimer;
+    document.getElementById("search-input").addEventListener("input", (e) => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => applyFilter(e.target.value), 200);
+    });
 
-  document.addEventListener("feedbackSubmitted", loadMessages);
+    document.addEventListener("feedbackSubmitted", loadMessages);
 
-  loadMessages();
+    loadMessages();
 </script>
