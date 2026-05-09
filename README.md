@@ -23,13 +23,13 @@ User → Astro Frontend (Cloudflare Pages)
 
 ## Technologies Used
 
-| Layer | Technology | Role |
-|---|---|---|
-| Frontend | [Astro](https://astro.build) | Static site generation, zero-JS-by-default pages |
-| Hosting | [Cloudflare Pages](https://pages.cloudflare.com) | CDN deployment of the static frontend |
-| API | [Cloudflare Workers](https://workers.cloudflare.com) | Edge serverless runtime (TypeScript, no Node.js) |
-| Cache | [Cloudflare KV](https://developers.cloudflare.com/kv/) | Low-latency globally-replicated key-value store |
-| Database | [Supabase](https://supabase.com) | Managed PostgreSQL with REST API & Row Level Security |
+| Layer    | Technology                                             | Role                                                  |
+| -------- | ------------------------------------------------------ | ----------------------------------------------------- |
+| Frontend | [Astro](https://astro.build)                           | Static site generation, zero-JS-by-default pages      |
+| Hosting  | [Cloudflare Pages](https://pages.cloudflare.com)       | CDN deployment of the static frontend                 |
+| API      | [Cloudflare Workers](https://workers.cloudflare.com)   | Edge serverless runtime (TypeScript, no Node.js)      |
+| Cache    | [Cloudflare KV](https://developers.cloudflare.com/kv/) | Low-latency globally-replicated key-value store       |
+| Database | [Supabase](https://supabase.com)                       | Managed PostgreSQL with REST API & Row Level Security |
 
 ---
 
@@ -121,11 +121,11 @@ npm run dev
 1. Push your repo to GitHub.
 2. Go to [Cloudflare Dashboard → Pages](https://dash.cloudflare.com) → **Create a project** → Connect to GitHub.
 3. Select the repo, then configure:
-   - **Build command**: `npm run build`
-   - **Build output directory**: `dist`
-   - **Root directory**: `astro-frontend`
+    - **Build command**: `npm run build`
+    - **Build output directory**: `dist`
+    - **Root directory**: `astro-frontend`
 4. Add environment variable in Pages settings:
-   - `PUBLIC_WORKER_URL` = `https://feedback-wall-api.YOUR-SUBDOMAIN.workers.dev`
+    - `PUBLIC_WORKER_URL` = `https://feedback-wall-api.YOUR-SUBDOMAIN.workers.dev`
 5. Click **Save and Deploy**.
 
 ---
@@ -143,9 +143,9 @@ npm run dev
 - [ ] Run: `wrangler deploy` — note the `*.workers.dev` URL
 - [ ] Set `PUBLIC_WORKER_URL` in Cloudflare Pages environment variables
 - [ ] Connect GitHub repo to Cloudflare Pages
-  - Build command: `npm run build`
-  - Output directory: `dist`
-  - Root directory: `astro-frontend`
+    - Build command: `npm run build`
+    - Output directory: `dist`
+    - Root directory: `astro-frontend`
 
 ---
 
@@ -156,16 +156,17 @@ npm run dev
 - KV cache TTL is **60 seconds** (balances freshness vs. cost).
 - Rate limiting: **5 submissions per IP per minute** (KV-based, best-effort).
 - All services use **free tiers**:
-  - Supabase: 500 MB DB, 2 GB egress/month
-  - Cloudflare Workers: 100,000 requests/day
-  - Cloudflare KV: 100,000 reads/day, 1,000 writes/day
-  - Cloudflare Pages: unlimited static requests
+    - Supabase: 500 MB DB, 2 GB egress/month
+    - Cloudflare Workers: 100,000 requests/day
+    - Cloudflare KV: 100,000 reads/day, 1,000 writes/day
+    - Cloudflare Pages: unlimited static requests
 
 ---
 
 ## Local Development
 
 **Worker (with live KV):**
+
 ```bash
 cd worker-api
 npm install
@@ -173,6 +174,7 @@ npx wrangler dev   # Runs at http://localhost:8787
 ```
 
 **Frontend:**
+
 ```bash
 cd astro-frontend
 npm install
